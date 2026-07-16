@@ -5,6 +5,29 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 
+namespace {
+
+struct StartupConfig {
+    std::string host;
+    bool use_simulation;
+};
+
+StartupConfig load_startup_config(const rclcpp::Node::SharedPtr &node, int argc, char *argv[])
+{
+    (void)argc;
+    (void)argv;
+    node->declare_parameter<std::string>("tm_robot_ip", "");
+    node->declare_parameter<bool>("tm_use_simulation", false);
+
+    StartupConfig config{};
+    config.host = node->get_parameter("tm_robot_ip").as_string();
+    config.use_simulation = node->get_parameter("tm_use_simulation").as_bool();
+
+    return config;
+}
+
+}
+
 
 class TmRos2Node : public rclcpp::Node
 {
@@ -101,19 +124,25 @@ void TmRos2Node::publisher()
 int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
-    std::string host;
-    if (argc > 1) {
-        host = argv[1];
-        if (host.find("robot_ip:=") != std::string::npos) {
-            host.replace(host.begin(), host.begin() + 10, "");
-        } else if (host.find("ip:=") != std::string::npos) {
-            host.replace(host.begin(), host.begin() + 4, "");        
-        }
-    }
-    else {
+
+    auto startup_node = rclcpp::Node::make_shared("tm_driver_node");
+    const StartupConfig config = load_startup_config(startup_node, argc, argv);
+
+    if (config.use_simulation) {
+        RCLCPP_INFO(startup_node->get_logger(), "Using simulation mode. No connection to a real robot.");
         rclcpp::shutdown();
+        return 0;
     }
-    auto nh = std::make_shared<TmRos2Node>(host);
+
+    if (config.host.empty()) {
+        RCLCPP_ERROR(
+            startup_node->get_logger(),
+            "Parameter 'tm_robot_ip' is required unless 'tm_use_simulation' is true.");
+        rclcpp::shutdown();
+        return 1;
+    }
+
+    auto nh = std::make_shared<TmRos2Node>(config.host);
     rclcpp::spin(nh);
     rclcpp::shutdown();
     print_info("TM_ROS: shutdown\n");

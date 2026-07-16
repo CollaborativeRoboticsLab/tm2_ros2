@@ -2,6 +2,32 @@
 #include "tm_driver/tm_ros2_movit_sct.h"
 #include "rclcpp/rclcpp.hpp"
 
+namespace {
+
+struct StartupConfig {
+  std::string host;
+  bool use_simulation;
+  bool use_direct_console_logging;
+};
+
+StartupConfig load_startup_config(const rclcpp::Node::SharedPtr &node, int argc, char *argv[])
+{
+  (void)argc;
+  (void)argv;
+  node->declare_parameter<std::string>("tm_robot_ip", "");
+  node->declare_parameter<bool>("tm_use_simulation", false);
+  node->declare_parameter<bool>("no_logging", false);
+
+  StartupConfig config{};
+  config.host = node->get_parameter("tm_robot_ip").as_string();
+  config.use_simulation = node->get_parameter("tm_use_simulation").as_bool();
+  config.use_direct_console_logging = node->get_parameter("no_logging").as_bool();
+
+  return config;
+}
+
+}
+
 void debug_function_print(char* msg){
   printf("%s[TM_DEBUG] %s\n%s", PRINT_CYAN.c_str(), msg, PRINT_RESET.c_str());
 }
@@ -64,37 +90,26 @@ int main(int argc, char *argv[])
 
     rclcpp::init(argc, argv);
 
-    bool is_fake = true;
-    std::string host;
-    if (argc > 1) {
-        host = argv[1];
-        if (host.find("robot_ip:=") != std::string::npos) {
-          host.replace(host.begin(), host.begin() + 10, "");
-          is_fake = false;
-        } else if (host.find("ip:=") != std::string::npos) {
-          host.replace(host.begin(), host.begin() + 4, "");
-          is_fake = false;
-        } else{
-          std::cout<<"ip is not found, use fake robot"<<std::endl;
-        }
-    } else {
-        rclcpp::shutdown();
-    }
-    if (is_fake) {
-        std::cout<<"only ip or robot_ip support, but your type is "<<host<<std::endl;
-    }
+  auto node = rclcpp::Node::make_shared(
+    "tm_driver_node");
 
-    if(argc == 3){
-      bool isSetNoLogPrint;
-      std::istringstream(argv[2]) >> std::boolalpha >> isSetNoLogPrint;
-      if(isSetNoLogPrint){
-        set_up_print_fuction();
-      }
-    }
+  const StartupConfig config = load_startup_config(node, argc, argv);
 
-    TmDriver iface(host, nullptr, nullptr);
+  if (config.use_direct_console_logging) {
+    set_up_print_fuction();
+  }
 
-    rclcpp::Node::SharedPtr node = rclcpp::Node::make_shared("tm_driver_node");
+  bool is_fake = config.use_simulation;
+  if (is_fake) {
+    RCLCPP_INFO(node->get_logger(), "Using simulation mode. No connection to a real robot.");
+  } else if (config.host.empty()) {
+    RCLCPP_ERROR(node->get_logger(), "Parameter 'tm_robot_ip' is required unless 'tm_use_simulation' is true.");
+    rclcpp::shutdown();
+    return 1;
+  }
+
+
+    TmDriver iface(config.host, nullptr, nullptr);
 
     auto tm_svr = std::make_shared<TmSvrRos2>(node, iface, is_fake);
     auto tm_sct = std::make_shared<TmRos2SctMoveit>(node, iface, is_fake);
