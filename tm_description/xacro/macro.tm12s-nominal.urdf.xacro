@@ -97,7 +97,7 @@
       <xacro:if value="${specified_color_arms}">
         <xacro:tm_material_whitegraphite />
       </xacro:if>
-      <xacro:if value="${prefix_monochrome_command}">
+	  <xacro:if value="${prefix_monochrome_command and color != 'none'}">
         <material name="${color}" />
       </xacro:if>
     </visual>
@@ -131,7 +131,7 @@
       <xacro:if value="${specified_color_arms}">
         <xacro:tm_material_darkolive />
       </xacro:if>
-      <xacro:if value="${prefix_monochrome_command}">
+	  <xacro:if value="${prefix_monochrome_command and color != 'none'}">
         <material name="${color}" />
       </xacro:if>
     </visual>
@@ -166,7 +166,7 @@
       <xacro:if value="${specified_color_arms}">
         <xacro:tm_material_darkolive />
       </xacro:if>
-      <xacro:if value="${prefix_monochrome_command}">
+	  <xacro:if value="${prefix_monochrome_command and color != 'none'}">
         <material name="${color}" />
       </xacro:if>
     </visual>
@@ -201,7 +201,7 @@
       <xacro:if value="${specified_color_arms}">
         <xacro:tm_material_gold />
       </xacro:if>
-      <xacro:if value="${prefix_monochrome_command}">
+	  <xacro:if value="${prefix_monochrome_command and color != 'none'}">
         <material name="${color}" />
       </xacro:if>
     </visual>
@@ -236,7 +236,7 @@
       <xacro:if value="${specified_color_arms}">
         <xacro:tm_material_darkolive />
       </xacro:if>
-      <xacro:if value="${prefix_monochrome_command}">
+	  <xacro:if value="${prefix_monochrome_command and color != 'none'}">
         <material name="${color}" />
       </xacro:if>
     </visual>
@@ -271,7 +271,7 @@
       <xacro:if value="${specified_color_arms}">
         <xacro:tm_material_darkolive />
       </xacro:if>
-      <xacro:if value="${prefix_monochrome_command}">
+	  <xacro:if value="${prefix_monochrome_command and color != 'none'}">
         <material name="${color}" />
       </xacro:if>
     </visual>
@@ -306,7 +306,7 @@
       <xacro:if value="${specified_color_arms}">
         <xacro:tm_material_purewhite />
       </xacro:if>
-      <xacro:if value="${prefix_monochrome_command}">
+	  <xacro:if value="${prefix_monochrome_command and color != 'none'}">
         <material name="${color}" />
       </xacro:if>
     </visual>
